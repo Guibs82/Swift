@@ -176,3 +176,249 @@ t3.km2s.s2
     安全检查4:
     构造函数在第一阶段构造完成之前, 不能调用任何实例方法、不能读取任何实例属性的值, self的值不能被引用。
 */
+
+//: 构造函数的继承和重写
+// 与Objective-C 中的子类不同, Swift2.0 中的子类不会默认继承父类的构造函数
+/*
+    重写指定构造器: 你可以在子类重载它的实现, 并在自定义版本的构造器中调用父类版的构造器
+    重写便利构造器: 你的重写过程必须通过调用同一类中提供的其他指定构造函数来实现
+*/
+class Car {
+    var wheels = 0
+    var desc: String {
+        return "\(wheels)个轮子"
+    }
+}
+let myCar = Car()
+print("我的车有\(myCar.wheels)个轮子")
+
+class Bus: Car {
+    // 重写父类的构造器
+    override init() {
+        // 调用父类的构造函数
+        super.init()
+        wheels = 4
+    }
+}
+let myBus = Bus()
+print("公车有:\(myBus.wheels)个轮子")
+
+//: 自动构造器的继承
+/*
+    假设要为子类中引入的任意新属性提供默认值, 请遵守以下两个原则
+    1. 如果子类没有定义任何指定构造函数, 它将自动继承所有父类的指定构造函数
+    2. 如果子类提供了所有父类指定构造器的实现(不管是通过规则1继承过来的, 还是通过自定义实现的), 它将自动继承所有父类的便利构造器
+*/
+
+//: 指定构造器和便利构造器的实战
+class Food {
+    var name: String
+    // 指定构造函数
+    init(name: String) {
+        self.name = name
+    }
+    // 便利构造器
+    convenience init() {
+        self.init(name: "无名")
+    }
+}
+let food1 = Food()
+food1.name
+
+class Cake: Food {
+    var count: Int
+    // 子类的指定构造器
+    init(name: String, count: Int) {
+        self.count = count
+        super.init(name: name)
+    }
+    // 子类的便利构造器
+    override convenience init(name: String) {
+        self.init(name: name, count: 1)
+    }
+}
+let cake1 = Cake()
+cake1.name
+cake1.count
+
+class buyCar: Cake {
+    var isBought = false
+    var desc: String {
+        var output = "\(name): \(count)"
+        output += isBought ? "√": "×"
+        return output
+    }
+}
+
+var foodList = [
+    buyCar(),
+    buyCar(name: "火锅"),
+    buyCar(name: "鱼丸", count: 10)
+]
+foodList[0].name
+foodList[0].count
+foodList[0].isBought
+foodList[0].desc
+
+foodList[1].name
+foodList[1].count
+foodList[1].isBought
+foodList[1].desc
+
+foodList[2].name
+foodList[2].count
+foodList[2].isBought
+foodList[2].desc
+
+//: 可失败的构造器
+/*
+    可失败的构造器的参数名和参数类型, 不能与其他费可失败构造器的参数名及类型相同
+*/
+struct Animal {
+    let SpecialAnimal: String
+    init?(specialAnimal: String) {
+        if specialAnimal.isEmpty {
+            print("没有输入特别动物")
+            return nil
+        }
+        self.SpecialAnimal = specialAnimal
+        print("特别动物是:\(specialAnimal)")
+    }
+}
+let spa1 = Animal(specialAnimal: "狮虎兽")
+let spa2 = Animal(specialAnimal: "")
+
+enum workDay {
+    case 周一, 周二, 周三, 周四, 周五
+    init?(周几: String) {
+        switch 周几 {
+        case "周一":
+            self = .周一
+            print("\(周几)是工作日,\(self)")
+        case "周二":
+            self = .周二
+            print("\(周几)是工作日,\(self)")
+        case "周三":
+            self = .周三
+            print("\(周几)是工作日,\(self)")
+        case "周四":
+            self = .周四
+            print("\(周几)是工作日,\(self)")
+        case "周五":
+            self = .周五
+            print("\(周几)是工作日,\(self)")
+        default:
+            print("\(周几)不是工作日")
+            return nil
+        }
+    }
+}
+let zhou6 = workDay(周几: "周六")
+let zhou5 = workDay(周几: "周五")
+
+// 类的可失败构造器只能在所有类属性被初始化后和所有类之间的构造器之间的代理调用完成后触发失败行为
+class Product {
+    let name: String!
+    init?(name: String) {
+        self.name = name
+        if name.isEmpty {
+            print("无名")
+            return nil
+        }
+        print("产品名:\(self.name)")
+    }
+}
+let p1 = Product(name: "")
+let p2 = Product(name: "奥特曼")
+
+class Basketball: Product {
+    let count: Int!
+    init?(name: String, count: Int) {
+        self.count = count
+        super.init(name: name)
+        if count < 1 {
+            print("一个都不卖么...")
+            return nil
+        }
+        print("您买了\(count)个\(name)")
+    }
+}
+
+let b1 = Basketball(name: "", count: 0)
+let b2 = Basketball(name: "b2", count: 0)
+let b3 = Basketball(name: "b3", count: 2)
+
+// 当你用一个子类的非可失败构造函数覆盖了一个父类的可失败构造函 数时,子类的构造函数将不再能向上代理父类的可失败构造函数。
+class Document {
+    var name: String?
+    init() {
+    }
+    init?(name: String) {
+        self.name = name
+        if name.isEmpty {
+            print("没有文件名")
+            return nil
+        }
+    }
+}
+class XDocument: Document {
+    override init() {
+        super.init()
+        self.name = "XDocument"
+        print("文件名是\(self.name)")
+    }
+    override init?(name: String) {
+        super.init()
+        if name.isEmpty {
+            self.name = "XDocument"
+        } else {
+            self.name = name
+        }
+        print("文件名是:\(self.name)")
+    }
+}
+let d1 = Document(name: "")
+let d2 = XDocument()
+let d3 = XDocument(name: "蜡笔小新")
+
+//: 必要构造函数
+// 必要构造器: 在父类的构造器关键字init 前添加关键字required, 表明子类重写该构造器后, 通过该构造器创建类的实例时, 会在调用完本类的构造器后, 会再调用父类相关的必要构造器
+class CodeMonkey {
+    required init() {
+        print("code everyday")
+    }
+}
+
+class iOSCodeMonkey: CodeMonkey {
+    required init() {
+        print("Code iOS Code everyday")
+    }
+}
+
+let iosCoder = iOSCodeMonkey()
+
+//: 通过闭包或方法设置属性的默认值
+/*
+    注意:闭包结尾的大括号后面接了一对空的小括号“()”。这是用来告诉系 统需要立刻执行此闭包。
+    如果你忽略了这对括号,相当于是将闭包本身作为值赋 值给了属性,而不是将闭包的返回值赋值给属性。
+*/
+struct Checkerboard {
+    let boardColors: [Bool] = {
+        var temporaryBoard = [Bool]()
+        var isBlack = false
+        for i in 1...10 {
+            for j in 1...10 {
+                temporaryBoard.append(isBlack)
+                isBlack = !isBlack
+            }
+            isBlack = !isBlack
+        }
+        return temporaryBoard
+    }()
+    func squareIsBlackAtRow(row: Int, column: Int) -> Bool {
+        return boardColors[(row * 10) + column]
+    }
+}
+let board = Checkerboard()
+print(board.squareIsBlackAtRow(0, column: 0))
+print(board.squareIsBlackAtRow(0, column: 1))
